@@ -12,18 +12,22 @@
   </header>
 
   <main>
-    <section id="stop-51099" class="bus-stop">
-      <h2>Bus Stop (Side of Catholic JC) – 51099</h2>
-      <div class="bus-list" id="bus-51099"></div>
-    </section>
-
-    <section id="stop-51091" class="bus-stop">
-      <h2>Bus Stop (Opposite Catholic JC) – 51091</h2>
-      <div class="bus-list" id="bus-51091"></div>
-    </section>
+    <table id="bus-table">
+      <thead>
+        <tr>
+          <th>Bus</th>
+          <th>Side of CJC (51099)</th>
+          <th>Opposite CJC (51091)</th>
+        </tr>
+      </thead>
+      <tbody id="bus-body">
+        <!-- Filled by JS -->
+      </tbody>
+    </table>
   </main>
 
   <footer>
+    <p id="last-updated"></p>
     <p>Data from <a href="https://arrivelah2.busrouter.sg" target="_blank">arrivelah2.busrouter.sg</a></p>
   </footer>
 
