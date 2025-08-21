@@ -1,97 +1,138 @@
-const stops = {
-  "51099": {}, // Side of CJC
-  "51091": {}  // Opposite CJC
-};
+// ------------------ Config ------------------
+const STOP_IDS = ["51099", "51091"]; // 51099 = Side of CJC, 51091 = Opposite
+const REFRESH_MS = 30000;
 
-let filterBuses = null;
-let filterSides = ["51099","51091"];
+// Data store: stops[stopId][busNo] = { next: timeStr|null, next2: timeStr|null }
+const stops = { "51099": {}, "51091": {} };
 
-// Parse query params
+// Active filters (from URL)
+let filterBuses = null;                  // null = show all
+let filterSides = ["51099", "51091"];    // default show both
+
+// ------------------ Utilities ------------------
+function sanitizeList(str) {
+  return (str || "")
+    .split(",")
+    .map(s => s.trim().toUpperCase())
+    .filter(Boolean);
+}
+
 function getParams() {
   const params = new URLSearchParams(window.location.search);
-  if (params.has("buses")) {
-    filterBuses = params.get("buses").split(",");
+  // buses can be provided as buses|bus|services|service
+  const busKey = ["buses", "bus", "services", "service"].find(k => params.has(k));
+  if (busKey) {
+    const list = sanitizeList(params.get(busKey));
+    filterBuses = list.length ? list : null; // if empty, treat as no filter
   }
-  if (params.has("side")) {
-    filterSides = params.get("side").split(",");
+
+  const sideKey = ["side", "sides"].find(k => params.has(k));
+  if (sideKey) {
+    const sides = sanitizeList(params.get(sideKey));
+    const valid = sides.filter(s => STOP_IDS.includes(s));
+    if (valid.length) filterSides = valid;
   }
 }
 
-// Fetch bus data
 async function fetchBusTimings(stopId) {
   try {
-    const response = await fetch(`https://arrivelah2.busrouter.sg/?id=${stopId}`);
-    const data = await response.json();
-    return data.services || [];
-  } catch (error) {
-    console.error("Error fetching bus timings:", error);
+    const url = `https://arrivelah2.busrouter.sg/?id=${stopId}`;
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    return Array.isArray(data.services) ? data.services : [];
+  } catch (e) {
+    console.error("Fetch error", stopId, e);
     return [];
   }
 }
 
-// Format arrival
 function formatArrival(time) {
   if (!time) return "N/A";
   const now = new Date();
-  const arrival = new Date(time);
-  const diffMins = Math.round((arrival - now) / 60000);
-  if (isNaN(diffMins)) return "N/A";
-  if (diffMins <= 0) return "Arriving";
-  return `${diffMins} min`;
+  const t = new Date(time);
+  const diff = Math.round((t - now) / 60000);
+  if (Number.isNaN(diff)) return "N/A";
+  if (diff <= 0) return "Arriving";
+  return `${diff} min`;
 }
 
-// Render table
-function renderTable() {
-  const body = document.getElementById("bus-body");
-  body.innerHTML = "";
+// ------------------ Rendering ------------------
+function populateCustomiseOptions(allServices) {
+  const box = document.getElementById("bus-options");
+  if (!box) return;
 
-  const allServices = new Set([
-    ...Object.keys(stops["51099"]),
-    ...Object.keys(stops["51091"])
-  ]);
-
-  let servicesToShow = Array.from(allServices);
-  if (filterBuses) {
-    servicesToShow = servicesToShow.filter(svc => filterBuses.includes(svc));
-  }
-
-  if (servicesToShow.length === 0) {
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 3;
-    cell.textContent = "No buses to display.";
-    row.appendChild(cell);
-    body.appendChild(row);
+  if (!allServices.length) {
+    box.textContent = "No services available yet.";
     return;
   }
 
-  servicesToShow.sort((a, b) => a.localeCompare(b, 'en', {numeric:true}))
-  .forEach(busNo => {
-    const row = document.createElement("tr");
-
-    const busCell = document.createElement("td");
-    busCell.className = "bus-service";
-    busCell.textContent = busNo;
-    row.appendChild(busCell);
-
-    ["51099","51091"].forEach(stopId => {
-      const cell = document.createElement("td");
-      cell.classList.add(`col-${stopId}`);
-      if (!filterSides.includes(stopId)) {
-        cell.style.display = "none";
-      } else {
-        const data = stops[stopId][busNo];
-        cell.textContent = data 
-          ? `Next: ${formatArrival(data.next)} | Sub: ${formatArrival(data.next2)}`
-          : "-";
-      }
-      row.appendChild(cell);
-    });
-
-    body.appendChild(row);
+  box.innerHTML = "";
+  allServices.forEach(busNo => {
+    const label = document.createElement("label");
+    label.className = "cb";
+    const checked = !filterBuses || filterBuses.includes(busNo);
+    label.innerHTML = `<input type="checkbox" name="bus" value="${busNo}" ${checked ? "checked" : ""}> ${busNo}`;
+    box.appendChild(label);
   });
+}
 
-  // Hide table columns if not selected
+function renderTable() {
+  const tbody = document.getElementById("bus-body");
+  tbody.innerHTML = "";
+
+  // union of all services across both stops
+  const union = new Set([
+    ...Object.keys(stops["51099"]),
+    ...Object.keys(stops["51091"])
+  ]);
+  const allServices = Array.from(union).sort((a,b)=>a.localeCompare(b, 'en', {numeric:true}));
+
+  // Populate checkboxes FIRST so they don't go missing
+  populateCustomiseOptions(allServices);
+
+  // Apply bus filter (case-insensitive, but our store uses uppercase anyway)
+  let showServices = allServices;
+  if (filterBuses) {
+    const set = new Set(filterBuses.map(s => s.toUpperCase()));
+    showServices = allServices.filter(svc => set.has(svc.toUpperCase()));
+  }
+
+  if (showServices.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 3;
+    td.textContent = "No buses to display for the selected filters.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    showServices.forEach(busNo => {
+      const tr = document.createElement("tr");
+
+      const busCell = document.createElement("td");
+      busCell.className = "bus-service";
+      busCell.textContent = busNo;
+      tr.appendChild(busCell);
+
+      STOP_IDS.forEach(stopId => {
+        const td = document.createElement("td");
+        td.classList.add(`col-${stopId}`);
+
+        if (!filterSides.includes(stopId)) {
+          td.style.display = "none";
+        } else {
+          const d = stops[stopId][busNo];
+          td.textContent = d
+            ? `Next: ${formatArrival(d.next)} | Sub: ${formatArrival(d.next2)}`
+            : "-";
+        }
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Hide table columns if side filter excludes them
   document.querySelectorAll("th.col-51099, td.col-51099").forEach(el => {
     el.style.display = filterSides.includes("51099") ? "" : "none";
   });
@@ -99,55 +140,59 @@ function renderTable() {
     el.style.display = filterSides.includes("51091") ? "" : "none";
   });
 
-  document.getElementById("last-updated").textContent = 
+  document.getElementById("last-updated").textContent =
     "Last updated: " + new Date().toLocaleTimeString();
-
-  populateCustomiseOptions(allServices);
 }
 
-// Populate customise checkboxes
-function populateCustomiseOptions(allServices) {
-  const container = document.getElementById("bus-options");
-  container.innerHTML = "";
-  Array.from(allServices).sort((a, b) => a.localeCompare(b, 'en', {numeric:true}))
-  .forEach(busNo => {
-    const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" name="bus" value="${busNo}" 
-      ${!filterBuses || filterBuses.includes(busNo) ? "checked" : ""}> ${busNo}`;
-    container.appendChild(label);
-  });
+// ------------------ Customise: actions ------------------
+function bindCustomiseActions() {
+  const genBtn = document.getElementById("generate-link");
+  const saveBtn = document.getElementById("save-link");
+  const linkP  = document.getElementById("custom-link");
+
+  if (genBtn) {
+    genBtn.addEventListener("click", () => {
+      const form = document.getElementById("customise-form");
+      const buses = Array.from(form.querySelectorAll("input[name='bus']:checked"))
+        .map(i => i.value.toUpperCase());
+      const sides = Array.from(form.querySelectorAll("input[name='side']:checked"))
+        .map(i => i.value);
+
+      let url = window.location.origin + window.location.pathname;
+      const params = new URLSearchParams();
+
+      if (buses.length) params.set("buses", buses.join(","));
+      // include side param always (explicit is clearer)
+      if (sides.length) params.set("side", sides.join(","));
+
+      const full = `${url}?${params.toString()}`;
+      linkP.innerHTML = `Your custom link: <a href="${full}">${full}</a>`;
+
+      // Navigate to the filtered view immediately
+      window.location.href = full;
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copied. In your browser menu, choose “Add to Home Screen”.");
+      } catch {
+        alert("Couldn’t copy automatically. Long-press the address bar to copy the link.");
+      }
+    });
+  }
 }
 
-// Customise link generator
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("generate-link").addEventListener("click", () => {
-    const form = document.getElementById("customise-form");
-    const buses = Array.from(form.querySelectorAll("input[name='bus']:checked")).map(i => i.value);
-    const sides = Array.from(form.querySelectorAll("input[name='side']:checked")).map(i => i.value);
-
-    let url = window.location.origin + window.location.pathname;
-    const params = new URLSearchParams();
-    if (buses.length > 0) params.set("buses", buses.join(","));
-    if (sides.length > 0 && sides.length < 2) params.set("side", sides.join(","));
-    url += "?" + params.toString();
-
-    const linkP = document.getElementById("custom-link");
-    linkP.innerHTML = `Your custom link: <a href="${url}">${url}</a>`;
-  });
-
-  document.getElementById("save-link").addEventListener("click", () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link copied! Paste it into Safari/Chrome menu → 'Add to Home Screen'.");
-  });
-});
-
-// Update cycle
+// ------------------ Data cycle ------------------
 async function updateAllStops() {
-  for (const stopId of Object.keys(stops)) {
+  for (const stopId of STOP_IDS) {
     const services = await fetchBusTimings(stopId);
     stops[stopId] = {};
     services.forEach(svc => {
-      stops[stopId][svc.no] = {
+      const no = String(svc.no).toUpperCase();
+      stops[stopId][no] = {
         next: svc.next?.time || null,
         next2: svc.next2?.time || null
       };
@@ -156,7 +201,10 @@ async function updateAllStops() {
   renderTable();
 }
 
-// Init
+// ------------------ Boot ------------------
 getParams();
-updateAllStops();
-setInterval(updateAllStops, 30000);
+document.addEventListener("DOMContentLoaded", () => {
+  bindCustomiseActions();
+  updateAllStops();
+  setInterval(updateAllStops, REFRESH_MS);
+});
