@@ -1,0 +1,78 @@
+/* Reset and font */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #000;       /* black background */
+  color: #fff;                  /* white text */
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+header {
+  background: #111;
+  padding: 1rem;
+  text-align: center;
+  border-bottom: 2px solid #444;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #f5c518;  /* high contrast yellow */
+}
+
+main {
+  padding: 1rem;
+}
+
+.bus-stop {
+  margin-bottom: 2rem;
+  background: #111;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(255,255,255,0.1);
+}
+
+h2 {
+  color: #00c8ff;
+  font-size: 1.2rem;
+  margin-top: 0;
+}
+
+.bus-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #222;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+}
+
+.bus-service {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #f5c518;
+}
+
+.bus-times {
+  text-align: right;
+}
+
+.bus-time {
+  display: block;
+  font-size: 1rem;
+  color: #fff;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  background: #111;
+  border-top: 2px solid #444;
+  font-size: 0.9rem;
+}
+
+a {
+  color: #00c8ff;
+}
