@@ -12,7 +12,7 @@ header {
   border-bottom: 2px solid #444;
 }
 
-h1 { margin: 0; font-size: 1.8rem; color: #CF4520; }
+h1 { margin: 0; font-size: 1.8rem; color: #DA7536; }
 
 table {
   width: 100%;
@@ -32,7 +32,7 @@ th, td {
 th { background: #222; color: #5BC2E7; }
 td { font-size: 1rem; }
 
-.bus-service { font-weight: bold; color: #cf4520; }
+.bus-service { font-weight: bold; color: #DA7536; }
 
 footer {
   text-align: center;
@@ -57,7 +57,7 @@ details summary {
   cursor: pointer;
   font-weight: bold;
   font-size: 1.2rem;
-  color: #cf4520;
+  color: #DA7536;
 }
 
 details[open] summary {
