@@ -1,7 +1,7 @@
-const stops = [
-  { id: "51099", elementId: "bus-51099" },
-  { id: "51091", elementId: "bus-51091" }
-];
+const stops = {
+  "51099": {}, // Side of CJC
+  "51091": {}  // Opposite CJC
+};
 
 async function fetchBusTimings(stopId) {
   try {
@@ -23,52 +23,64 @@ function formatArrival(time) {
   return `${diffMins} min`;
 }
 
-function renderBusTimings(stopId, services) {
-  const container = document.getElementById(`bus-${stopId}`);
-  container.innerHTML = "";
+function renderTable() {
+  const body = document.getElementById("bus-body");
+  body.innerHTML = "";
 
-  if (!services || services.length === 0) {
-    container.innerHTML = "<p>No bus data available</p>";
-    return;
-  }
+  // get all bus numbers seen across both stops
+  const allServices = new Set([
+    ...Object.keys(stops["51099"]),
+    ...Object.keys(stops["51091"])
+  ]);
 
-  services.forEach(service => {
-    const card = document.createElement("div");
-    card.className = "bus-card";
+  Array.from(allServices).sort((a, b) => a.localeCompare(b, 'en', {numeric:true}))
+  .forEach(busNo => {
+    const row = document.createElement("tr");
 
-    const serviceDiv = document.createElement("div");
-    serviceDiv.className = "bus-service";
-    serviceDiv.textContent = service.no;
+    // Bus number
+    const busCell = document.createElement("td");
+    busCell.className = "bus-service";
+    busCell.textContent = busNo;
+    row.appendChild(busCell);
 
-    const timesDiv = document.createElement("div");
-    timesDiv.className = "bus-times";
+    // Side of CJC timings
+    const sideCell = document.createElement("td");
+    const sideData = stops["51099"][busNo];
+    sideCell.textContent = sideData 
+      ? `Next: ${formatArrival(sideData.next)} | Sub: ${formatArrival(sideData.next2)}`
+      : "-";
+    row.appendChild(sideCell);
 
-    const nextBus = document.createElement("span");
-    nextBus.className = "bus-time";
-    nextBus.textContent = `Next: ${formatArrival(service.next.time)}`;
+    // Opposite CJC timings
+    const oppCell = document.createElement("td");
+    const oppData = stops["51091"][busNo];
+    oppCell.textContent = oppData 
+      ? `Next: ${formatArrival(oppData.next)} | Sub: ${formatArrival(oppData.next2)}`
+      : "-";
+    row.appendChild(oppCell);
 
-    const next2Bus = document.createElement("span");
-    next2Bus.className = "bus-time";
-    next2Bus.textContent = `Subsequent: ${formatArrival(service.next2.time)}`;
-
-    timesDiv.appendChild(nextBus);
-    timesDiv.appendChild(next2Bus);
-
-    card.appendChild(serviceDiv);
-    card.appendChild(timesDiv);
-
-    container.appendChild(card);
+    body.appendChild(row);
   });
+
+  document.getElementById("last-updated").textContent = 
+    "Last updated: " + new Date().toLocaleTimeString();
 }
 
 async function updateAllStops() {
-  for (const stop of stops) {
-    const services = await fetchBusTimings(stop.id);
-    renderBusTimings(stop.id, services);
+  for (const stopId of Object.keys(stops)) {
+    const services = await fetchBusTimings(stopId);
+    stops[stopId] = {};
+    services.forEach(svc => {
+      stops[stopId][svc.no] = {
+        next: svc.next.time,
+        next2: svc.next2.time
+      };
+    });
   }
+  renderTable();
 }
 
 // Initial load
 updateAllStops();
-// Refresh every 30 seconds
+// Refresh every 30s
 setInterval(updateAllStops, 30000);
