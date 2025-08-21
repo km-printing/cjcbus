@@ -1,56 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CJC Bus Arrival Timings</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
       background-color: #121212;
       color: #ffffff;
-      font-family: Arial, sans-serif;
+      text-align: center;
       margin: 0;
       padding: 20px;
     }
-    h1, h2 {
-      text-align: center;
+    h1 {
+      color: #00e676;
+      margin-bottom: 20px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin-bottom: 30px;
     }
     th, td {
-      border: 1px solid #ffffff;
+      border: 1px solid #333;
       padding: 10px;
       text-align: center;
     }
     th {
       background-color: #1f1f1f;
+      color: #00e676;
     }
     tr:nth-child(even) {
-      background-color: #2a2a2a;
+      background-color: #1e1e1e;
     }
-    .customise {
-      margin-top: 30px;
-      padding: 15px;
-      border: 1px solid #fff;
-      border-radius: 10px;
-      background: #1f1f1f;
-    }
-    .customise h3 {
-      margin-top: 0;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px 15px;
-      background: #0078d7;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
+    .collapsible {
+      background-color: #1f1f1f;
+      color: #00e676;
       cursor: pointer;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      text-align: left;
+      outline: none;
+      font-size: 16px;
+      margin-bottom: 5px;
     }
-    button:hover {
-      background: #005fa3;
+    .active, .collapsible:hover {
+      background-color: #333;
+    }
+    .content {
+      padding: 0 15px;
+      display: none;
+      overflow: hidden;
+      background-color: #1a1a1a;
+      border: 1px solid #333;
+      margin-bottom: 20px;
+    }
+    .customise-section {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .customise-section label {
+      display: block;
+      margin: 5px 0;
+    }
+    .btn {
+      background-color: #00e676;
+      color: #121212;
+      border: none;
+      padding: 10px 15px;
+      margin: 10px 0;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 5px;
+    }
+    .btn:hover {
+      background-color: #00c853;
     }
   </style>
 </head>
@@ -59,27 +85,25 @@
   <table id="busTable">
     <thead>
       <tr>
-        <th>Bus Number</th>
-        <th>College Side (51099)</th>
-        <th>Opposite Side (51091)</th>
+        <th>Bus</th>
+        <th>College Side</th>
+        <th>Opposite Side</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <div class="customise">
-    <h3>Customise your view</h3>
-    <div>
-      <label><b>Choose buses:</b></label><br>
+  <button type="button" class="collapsible">➕ Customise your view</button>
+  <div class="content">
+    <div class="customise-section">
+      <h3>Choose Buses</h3>
       <div id="bus-options">Loading...</div>
-    </div>
-    <div>
-      <label><b>Choose side(s):</b></label><br>
-      <label><input type="checkbox" id="side-college" checked> College Side</label><br>
+      <h3>Choose Sides</h3>
+      <label><input type="checkbox" id="side-college" checked> College Side</label>
       <label><input type="checkbox" id="side-opposite" checked> Opposite Side</label>
+      <button class="btn" onclick="applyCustomisation()">Apply</button>
+      <button class="btn" onclick="saveToHome()">Save to Home Screen</button>
     </div>
-    <button id="applyFilters">Apply & Reload</button>
-    <button id="saveHome">Save to Home Screen</button>
   </div>
 
   <script>
@@ -88,99 +112,100 @@
       opposite: "51091"
     };
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedBuses = urlParams.get("buses") ? urlParams.get("buses").split(",") : null;
-    const selectedSides = urlParams.get("side") ? urlParams.get("side").split(",") : ["college","opposite"];
+    let busesData = { college: {}, opposite: {} };
 
-    async function fetchBusData(stopId) {
-      const res = await fetch(`https://arrivelah2.busrouter.sg/?id=${stopId}`);
-      return await res.json();
+    async function fetchBusData(stopId, key) {
+      const response = await fetch(`https://arrivelah2.busrouter.sg/?id=${stopId}`);
+      const data = await response.json();
+      busesData[key] = {};
+      data.services.forEach(service => {
+        busesData[key][service.no] = [
+          service.next.time ? new Date(service.next.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "N/A",
+          service.subsequent.time ? new Date(service.subsequent.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "N/A"
+        ];
+      });
     }
 
-    function getArrivalTimes(services, bus) {
-      const svc = services.find(s => s.no === bus);
-      if (!svc) return ["-", "-"];
-      const t1 = svc.next ? Math.round(svc.next.duration_ms / 60000) : null;
-      const t2 = svc.subsequent ? Math.round(svc.subsequent.duration_ms / 60000) : null;
-      return [
-        t1 !== null ? (t1 === 0 ? "Arr" : `${t1} min`) : "-",
-        t2 !== null ? (t2 === 0 ? "Arr" : `${t2} min`) : "-"
-      ];
+    async function loadBusData() {
+      await fetchBusData(stops.college, "college");
+      await fetchBusData(stops.opposite, "opposite");
+      renderTable();
+      renderBusOptions();
     }
 
-    async function loadTable() {
-      const [collegeData, oppositeData] = await Promise.all([
-        fetchBusData(stops.college),
-        fetchBusData(stops.opposite)
-      ]);
-
-      const buses = Array.from(new Set([
-        ...collegeData.services.map(s => s.no),
-        ...oppositeData.services.map(s => s.no)
-      ])).sort((a,b)=>a-b);
-
+    function renderTable() {
       const tbody = document.querySelector("#busTable tbody");
       tbody.innerHTML = "";
 
-      buses.forEach(bus => {
-        if (selectedBuses && !selectedBuses.includes(bus)) return;
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedBuses = urlParams.get("buses") ? urlParams.get("buses").split(",") : null;
+      const showCollege = urlParams.get("college") !== "false";
+      const showOpposite = urlParams.get("opposite") !== "false";
 
+      const allBuses = new Set([...Object.keys(busesData.college), ...Object.keys(busesData.opposite)]);
+      allBuses.forEach(bus => {
+        if (selectedBuses && !selectedBuses.includes(bus)) return;
         const row = document.createElement("tr");
+
         const busCell = document.createElement("td");
         busCell.textContent = bus;
         row.appendChild(busCell);
 
-        if (selectedSides.includes("college")) {
-          const [t1, t2] = getArrivalTimes(collegeData.services, bus);
-          row.appendChild(makeCell(`${t1}, ${t2}`));
-        } else {
-          row.appendChild(makeCell("-"));
-        }
+        const collegeCell = document.createElement("td");
+        collegeCell.textContent = showCollege && busesData.college[bus] ? busesData.college[bus].join(" / ") : "-";
+        row.appendChild(collegeCell);
 
-        if (selectedSides.includes("opposite")) {
-          const [t1, t2] = getArrivalTimes(oppositeData.services, bus);
-          row.appendChild(makeCell(`${t1}, ${t2}`));
-        } else {
-          row.appendChild(makeCell("-"));
-        }
+        const oppositeCell = document.createElement("td");
+        oppositeCell.textContent = showOpposite && busesData.opposite[bus] ? busesData.opposite[bus].join(" / ") : "-";
+        row.appendChild(oppositeCell);
 
         tbody.appendChild(row);
       });
-
-      loadBusOptions(buses);
     }
 
-    function makeCell(content) {
-      const td = document.createElement("td");
-      td.textContent = content;
-      return td;
-    }
-
-    function loadBusOptions(buses) {
+    function renderBusOptions() {
       const container = document.getElementById("bus-options");
       container.innerHTML = "";
-      buses.forEach(bus => {
+      const allBuses = new Set([...Object.keys(busesData.college), ...Object.keys(busesData.opposite)]);
+      allBuses.forEach(bus => {
         const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" value="${bus}" ${!selectedBuses || selectedBuses.includes(bus) ? "checked" : ""}> ${bus}`;
+        label.innerHTML = `<input type="checkbox" value="${bus}" checked> Bus ${bus}`;
         container.appendChild(label);
-        container.appendChild(document.createElement("br"));
       });
     }
 
-    document.getElementById("applyFilters").addEventListener("click", () => {
-      const chosenBuses = Array.from(document.querySelectorAll("#bus-options input:checked")).map(i => i.value);
-      const chosenSides = [];
-      if (document.getElementById("side-college").checked) chosenSides.push("college");
-      if (document.getElementById("side-opposite").checked) chosenSides.push("opposite");
-      const newUrl = `${window.location.pathname}?buses=${chosenBuses.join(",")}&side=${chosenSides.join(",")}`;
-      window.location.href = newUrl;
+    function applyCustomisation() {
+      const selectedBuses = [...document.querySelectorAll("#bus-options input:checked")].map(cb => cb.value);
+      const showCollege = document.getElementById("side-college").checked;
+      const showOpposite = document.getElementById("side-opposite").checked;
+
+      const params = new URLSearchParams();
+      if (selectedBuses.length > 0) params.set("buses", selectedBuses.join(","));
+      params.set("college", showCollege);
+      params.set("opposite", showOpposite);
+
+      window.location.search = params.toString();
+    }
+
+    function saveToHome() {
+      alert("To save this page to your home screen:\n- On iPhone Safari: Tap Share → Add to Home Screen\n- On Android Chrome: Tap Menu → Add to Home Screen");
+    }
+
+    // Collapsible logic
+    document.querySelector(".collapsible").addEventListener("click", function() {
+      this.classList.toggle("active");
+      const content = this.nextElementSibling;
+      if (content.style.display === "block") {
+        content.style.display = "none";
+        this.textContent = "➕ Customise your view";
+      } else {
+        content.style.display = "block";
+        this.textContent = "➖ Customise your view";
+      }
     });
 
-    document.getElementById("saveHome").addEventListener("click", () => {
-      alert("To save this page to your Home Screen:\n\nOn iOS Safari: Tap Share → Add to Home Screen\nOn Android Chrome: Tap ⋮ → Add to Home Screen");
-    });
-
-    loadTable();
+    loadBusData();
+    setInterval(loadBusData, 30000);
   </script>
 </body>
 </html>
