@@ -26,6 +26,30 @@
     </table>
   </main>
 
+<section id="customise">
+  <details>
+    <summary>⚙️ Customise your view</summary>
+    <div style="margin-top: 10px;">
+      <form id="customise-form">
+        <fieldset>
+          <legend>Choose buses:</legend>
+          <div id="bus-options">Loading...</div>
+        </fieldset>
+        <fieldset>
+          <legend>Choose side(s):</legend>
+          <label class="cb"><input type="checkbox" name="side" value="51099" checked> Side of CJC</label>
+          <label class="cb"><input type="checkbox" name="side" value="51091" checked> Opposite CJC</label>
+        </fieldset>
+        <div class="actions">
+          <button type="button" id="generate-link">Generate & Load Link</button>
+          <button type="button" id="save-link">📲 Save This Link</button>
+        </div>
+      </form>
+      <p id="custom-link"></p>
+    </div>
+  </details>
+</section>
+  
   <footer>
     <p id="last-updated"></p>
     <p>Data from <a href="https://arrivelah2.busrouter.sg" target="_blank">arrivelah2.busrouter.sg</a></p>
