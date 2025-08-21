@@ -12,7 +12,7 @@ header {
   border-bottom: 2px solid #444;
 }
 
-h1 { margin: 0; font-size: 1.8rem; color: #f5c518; }
+h1 { margin: 0; font-size: 1.8rem; color: #CF4520; }
 
 table {
   width: 100%;
@@ -29,10 +29,10 @@ th, td {
   text-align: center;
 }
 
-th { background: #222; color: #00c8ff; }
+th { background: #222; color: #06038d; }
 td { font-size: 1rem; }
 
-.bus-service { font-weight: bold; color: #f5c518; }
+.bus-service { font-weight: bold; color: #cf4520; }
 
 footer {
   text-align: center;
@@ -42,7 +42,7 @@ footer {
   font-size: 0.9rem;
 }
 
-a { color: #00c8ff; }
+a { color: #06038d; }
 
 /* Customise panel */
 details.customise, #customise {
@@ -57,11 +57,11 @@ details summary {
   cursor: pointer;
   font-weight: bold;
   font-size: 1.2rem;
-  color: #f5c518;
+  color: #cf4520;
 }
 
 details[open] summary {
-  color: #00c8ff;
+  color: #06038d;
 }
 
 fieldset {
@@ -70,7 +70,7 @@ fieldset {
   padding: 0.75rem;
 }
 
-legend { color: #00c8ff; }
+legend { color: #06038d; }
 
 #bus-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.4rem; }
 .cb { display: inline-flex; align-items: center; gap: 0.5rem; background: #1a1a1a; padding: 0.4rem 0.6rem; border-radius: 6px; }
@@ -78,7 +78,7 @@ legend { color: #00c8ff; }
 .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 
 button {
-  background: #00c8ff;
+  background: #06038d;
   color: #000;
   border: none;
   padding: 0.6rem 1rem;
@@ -86,4 +86,4 @@ button {
   border-radius: 6px;
   font-weight: bold;
 }
-button:hover { background: #0099cc; }
+button:hover { background: #5bc2e7; }
