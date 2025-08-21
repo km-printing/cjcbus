@@ -79,3 +79,14 @@ button {
   font-weight: bold;
 }
 button:hover { background: #0099cc; }
+
+details summary {
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #f5c518;
+}
+
+details[open] summary {
+  color: #00c8ff;
+}
