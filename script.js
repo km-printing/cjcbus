@@ -127,9 +127,25 @@ function bindCustomiseActions(){
   }
 }
 
-async function updateAllStops(){
-  for(const stopId of STOP_IDS){
-    const services=await fetchBusTimings(stopId);
-    stops[stopId]={};
-    services.forEach(svc=>{
-      const no
+async function updateAllStops() {
+  for (const stopId of STOP_IDS) {
+    const services = await fetchBusTimings(stopId);
+    stops[stopId] = {};
+    services.forEach(svc => {
+      const no = String(svc.no).toUpperCase();
+      stops[stopId][no] = {
+        next: svc.next?.time || null,
+        next2: svc.next2?.time || null
+      };
+    });
+  }
+  renderTable();
+}
+
+// ------------------ Boot ------------------
+getParams();
+document.addEventListener("DOMContentLoaded", () => {
+  bindCustomiseActions();
+  updateAllStops();
+  setInterval(updateAllStops, REFRESH_MS);
+});
