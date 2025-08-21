@@ -12,7 +12,7 @@
   </header>
 
   <main>
-    <table id="bus-table">
+    <table id="bus-table" aria-live="polite">
       <thead>
         <tr>
           <th>Bus</th>
@@ -21,7 +21,7 @@
         </tr>
       </thead>
       <tbody id="bus-body">
-        <!-- Filled by JS -->
+        <tr><td colspan="3">Loading…</td></tr>
       </tbody>
     </table>
   </main>
@@ -31,22 +31,24 @@
     <form id="customise-form">
       <fieldset>
         <legend>Choose buses:</legend>
-        <div id="bus-options">Loading...</div>
+        <div id="bus-options">Loading…</div>
       </fieldset>
       <fieldset>
         <legend>Choose side(s):</legend>
-        <label><input type="checkbox" name="side" value="51099" checked> Side of CJC</label>
-        <label><input type="checkbox" name="side" value="51091" checked> Opposite CJC</label>
+        <label class="cb"><input type="checkbox" name="side" value="51099" checked> Side of CJC (51099)</label>
+        <label class="cb"><input type="checkbox" name="side" value="51091" checked> Opposite CJC (51091)</label>
       </fieldset>
-      <button type="button" id="generate-link">Generate Link</button>
+      <div class="actions">
+        <button type="button" id="generate-link">Generate & Load Link</button>
+        <button type="button" id="save-link">📲 Copy Current Link</button>
+      </div>
     </form>
     <p id="custom-link"></p>
-    <button id="save-link">📲 Save This Link</button>
   </section>
 
   <footer>
     <p id="last-updated"></p>
-    <p>Data from <a href="https://arrivelah2.busrouter.sg" target="_blank">arrivelah2.busrouter.sg</a></p>
+    <p>Data from <a href="https://arrivelah2.busrouter.sg" target="_blank" rel="noopener">arrivelah2.busrouter.sg</a></p>
   </footer>
 
   <script src="script.js"></script>
