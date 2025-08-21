@@ -29,7 +29,7 @@ th, td {
   text-align: center;
 }
 
-th { background: #222; color: #5BC2E7; }
+th { background: #222; color: #82C6E6; }
 td { font-size: 1rem; }
 
 .bus-service { font-weight: bold; color: #DA7536; }
@@ -42,7 +42,7 @@ footer {
   font-size: 0.9rem;
 }
 
-a { color: #5BC2E7; }
+a { color: #82C6E6; }
 
 /* Customise panel */
 details.customise, #customise {
@@ -61,7 +61,7 @@ details summary {
 }
 
 details[open] summary {
-  color: #5BC2E7;
+  color: #82C6E6;
 }
 
 fieldset {
@@ -70,7 +70,7 @@ fieldset {
   padding: 0.75rem;
 }
 
-legend { color: #5BC2E7; }
+legend { color: #82C6E6; }
 
 #bus-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.4rem; }
 .cb { display: inline-flex; align-items: center; gap: 0.5rem; background: #1a1a1a; padding: 0.4rem 0.6rem; border-radius: 6px; }
@@ -78,7 +78,7 @@ legend { color: #5BC2E7; }
 .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 
 button {
-  background: #5BC2E7;
+  background: #82C6E6;
   color: #000;
   border: none;
   padding: 0.6rem 1rem;
@@ -86,4 +86,4 @@ button {
   border-radius: 6px;
   font-weight: bold;
 }
-button:hover { background: #5bc2e7; }
+button:hover { background: #82C6E6; }
